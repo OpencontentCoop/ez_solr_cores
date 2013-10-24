@@ -13,8 +13,9 @@
 # Ogni volta che si aggiunge un multicore, si deve aggiornare 
 # la seguente:
 # SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
-SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
+#SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
 #SOLR_MULTICORES_NAMES="multicore-8984"
+SOLR_MULTICORES_NAMES=`ls -1 /home/solr | grep -e ^multicore- | grep -e [0-9][0-9][0-9][0-9]$`
 # questi valori sono da adeguare all'installazione
 SOLR_MULTICORES_ROOT_DIR=/home/solr
 SOLR_SERVER_NAME=`hostname -f`
