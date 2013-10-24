@@ -211,8 +211,11 @@ case $action in
   list)
     for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do 
       solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
-      echo "Listing cores for sorl multicore at $solr_multicore_dir"
-      echo "(di seguito l'esito del comando: cat $solr_multicore_dir/cores/solr.xml | grep instanceDir  )"
+      echo
+      echo "* Multicore at $solr_multicore_dir"
+      echo "Lucene Version  (cat $solr_multicore_dir/java/solr/conf/solrconfig.xml | grep '<luceneMatchVersion>')"
+      cat $solr_multicore_dir/java/solr/conf/solrconfig.xml | grep '<luceneMatchVersion>'
+      echo "Cores list: (cat $solr_multicore_dir/cores/solr.xml | grep instanceDir )"
       cat $solr_multicore_dir/cores/solr.xml | grep instanceDir
       if [ $? -eq 1 ] ; then 
         echo "         none"
