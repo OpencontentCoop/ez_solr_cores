@@ -176,15 +176,15 @@ case $action in
     echo "    [SolrBase]"
     echo "    SearchServerURI=http://$SOLR_SERVER_NAME:$SOLR_MULTICORES_PORT/solr/$CORE_NAME"
     echo
-    echo "* archivia la vecchia directory java eseguendo:"
-    echo "    tar -czvf extension/ezfind/old_java.tar.gz extension/ezfind/java"
-    echo "    rm -rf extension/ezfind/java"
-    echo 
     echo "Se vuoi migrare i dati esistenti, copia il contenuto di" 
     echo "  extension/ezfind/java/solr/data/ "
     echo "nella directory:"
     echo "  $SOLR_MULTICORES_DIR/cores/$CORE_NAME/data"
     echo 
+    echo "* archivia la vecchia directory java eseguendo:"
+    echo "    tar -czvf extension/ezfind/old_java.tar.gz extension/ezfind/java"
+    echo "    rm -rf extension/ezfind/java"
+    echo
     echo "Ricordati di riavviare solr eseguendo: "
     echo "  service $SOLR_MULTICORES_INIT_SCRIPT restart"
     echo
