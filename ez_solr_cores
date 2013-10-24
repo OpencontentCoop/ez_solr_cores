@@ -20,7 +20,6 @@ SOLR_SERVER_NAME=`hostname -f`
 # attivare per debug
 DEBUG=0
 
-
 ########## DO NOT CHANGE THE REST ################################################
 
 THIS_SCRIPT=`basename $0`
