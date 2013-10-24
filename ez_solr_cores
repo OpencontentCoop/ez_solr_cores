@@ -231,11 +231,22 @@ case $action in
   status)
     for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
       solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
-      echo -n "Status of solr multicore installation at $solr_multicore_dir: "
-      if [ -f $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid ] ; then
-        echo "running"
+      # get first core needed for testing its ping page
+      cat  $SOLR_MULTICORES_DIR/cores/solr.xml | grep -m1 "<core name="  | sed  's/<core name=\"//g'
+      echo "manca del codice qui"
+      exit 1
+      echo  "Status of solr multicore installation at $solr_multicore_dir: "
+      #if [ -f $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid ] ; then
+      #  echo "running"
+      #else
+      #  echo "stopped"
+      #fi
+      ping_url="http://localhost:$SOLR_MULTICORES_PORT/solr/$CORE_NAME/admin/ping"
+      wget  -qO - $ping_url | grep "<str name=\"status\">OK</str>" > /dev/null
+      if [ $? -eq 0 ] ; then 
+        echo "  Status OK at $ping_url"
       else
-        echo "stopped"
+        echo "  ERR: status is NOT ok  (either $ping_url is unreachable or its content does not have OK status)"
       fi
      done
     ;;
