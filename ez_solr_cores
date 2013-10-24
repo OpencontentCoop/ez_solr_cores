@@ -173,8 +173,10 @@ case $action in
     echo "*******************************************"
     echo
     echo "* Modifica ora extension/ezfind/settings/solr.ini inserendo:"
-    echo "    [SolrBase]"
-    echo "    SearchServerURI=http://$SOLR_SERVER_NAME:$SOLR_MULTICORES_PORT/solr/$CORE_NAME"
+    echo "      [SolrBase]"
+    echo "      SearchServerURI=http://$SOLR_SERVER_NAME:$SOLR_MULTICORES_PORT/solr/$CORE_NAME"
+    echo "    oppure, se il solr e' in localhost:"
+    echo "      SearchServerURI=http://localhost:$SOLR_MULTICORES_PORT/solr/$CORE_NAME"
     echo
     echo "Se vuoi migrare i dati esistenti, copia il contenuto di" 
     echo "  extension/ezfind/java/solr/data/ "
