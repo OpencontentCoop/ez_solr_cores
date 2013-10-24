@@ -1,0 +1,225 @@
+#!/bin/bash
+
+
+# Utilite' per aggiungere/togliere cores da una installazione solr multicore
+#
+# ATENZIONE: lo script prevede che 
+#
+# * il nome dell'installazione multicore termini con il numero della porta solr, es. multicore-8984
+# * lo script di start/stop di solr sia /etc/init.s/solr.multicore-8984
+# * /home/solr/multicore-8984/conftemplate contenga una copia della directory extension/ezfind/java/solr/conf/ di ezfind
+#
+# Ogni volta che si aggiunge un multicore, si deve aggiornare 
+# la seguente:
+# SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
+SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
+#SOLR_MULTICORES_NAMES="multicore-8984"
+# questi valori sono da adeguare all'installazione
+SOLR_MULTICORES_ROOT_DIR=/home/solr
+SOLR_SERVER_NAME=`hostname -f`
+
+# attivare per debug
+DEBUG=0
+
+########## DO NOT CHANGE THE REST ################################################
+
+THIS_SCRIPT=`basename $0`
+THIS_SCRIPT_FULL_NAME=`dirname $0`/$THIS_SCRIPT
+
+# getops see /usr/share/doc/util-linux/examples/getopt-parse.bash
+TEMP=`getopt -o hlsa:r: --long help,list,status,add:,remove: \
+     -n "$THIS_SCRIPT" -- "$@"`
+
+if [ $? != 0 ] ; then
+  echo "try '$THIS_SCRIPT --help' for datailed options"
+  echo "Terminating..." >&2
+  exit 1
+fi
+eval set -- "$TEMP"
+while true ; do
+    case "$1" in
+        -h|--help)
+                echo
+                echo "Usage: $THIS_SCRIPT OPTIONS"
+                echo
+                echo "Utility for  adding/removing solr cores"
+                echo
+                echo "Options:"
+                echo "-h,--help                       "
+                echo "-a,--add CORENAME               add core"
+                echo "-r,--remove CORENAME            remove core"
+                #echo "-v,--verbose...                 display more information"
+                #echo "-d,--debug...                  display debug output at end of execution"
+                echo "-l,--list                       list all cores (default options)"
+                echo "-s,--status                     running status of all cores"
+                echo 
+                exit;;
+        -l|--list)
+            action="list"
+            shift ;;
+        -s|--status)
+            action="status"
+            shift ;;
+        -a|--add)
+            action="add"
+            CORE_NAME="$2"
+            shift 2 ;;
+        -r|--remove)
+            action="remove"
+            CORE_NAME="$2"
+            shift 2 ;;
+        --) shift ; break ;;
+        *) echo "Internal error!" ; exit 1 ;;
+    esac
+done
+
+# il seguente necessario per ottenere $arg 
+for arg do variabile_inutile=1 ; done
+
+if [ $DEBUG -eq 1 ] ; then 
+ echo "Remaining arguments:"
+ for arg do echo '--> '"\`$arg'" ; done
+fi
+
+if [ $arg ] ; then
+  echo "ERROR: no argoment should be entered, see $THIS_SCRIPT --help"
+  exit 1
+fi
+
+# choosing the multicore
+cores_number=0
+for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
+  cores_number=$[ $cores_number + 1 ]
+done
+
+if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then 
+  if [ $cores_number -eq 1 ] ; then
+    SOLR_MULTICORES_NAME=$SOLR_MULTICORES_NAMES
+  else
+    echo
+    echo "Multicore disponibili:"
+    counter=0
+    echo
+    echo "  Selection     Path"
+    echo "------------------------------------------------------------"
+    for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
+      counter=$[ $counter + 1 ]
+      solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
+      echo "  $counter             $solr_multicore_dir"
+    done
+    echo
+    echo -n "Scegli il numero del multicore: "
+    read choice
+    
+    counter=0
+    for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
+      counter=$[ $counter + 1 ]
+      if [ "$choice" -eq $counter ] ; then
+        SOLR_MULTICORES_NAME=$solr_multicore_name
+      fi
+    done
+  fi
+fi 
+
+SOLR_MULTICORES_DIR=$SOLR_MULTICORES_ROOT_DIR/$SOLR_MULTICORES_NAME # /home/solr/multicore
+# ricavo porta
+# ${string:position:length}
+# ${#var} = lunghezza della variabiel var
+SOLR_MULTICORES_PORT=${SOLR_MULTICORES_DIR:$(( ${#SOLR_MULTICORES_DIR}-4 ))}
+# ricavo il nome del servizio
+SOLR_MULTICORES_INIT_SCRIPT=solr.$SOLR_MULTICORES_NAME
+# data in formato: 2013_10_24_h09_46_43
+DATE=`date +%Y_%m_%d_h%H_%M_%S`
+
+case $action in
+  add)
+    # creo directory: se da' errore il core esiste gia
+    if [ -d "$SOLR_MULTICORES_DIR/cores/$CORE_NAME" ] ; then
+      echo "ERRORE: core '$CORE_NAME' e' gia' esistente"
+      exit 1 
+    fi
+    mkdir $SOLR_MULTICORES_DIR/cores/$CORE_NAME
+
+    mkdir -p $SOLR_MULTICORES_DIR/cores/$CORE_NAME/data
+    # creo /conf a partire da un template
+    mkdir $SOLR_MULTICORES_DIR/cores/$CORE_NAME/conf
+    cp -a $SOLR_MULTICORES_DIR/conftemplate/*  $SOLR_MULTICORES_DIR/cores/$CORE_NAME/conf/
+    # modifico dataDir
+    sed -i "s/solr.data.dir:.\/solr\/data/solr.data.dir:..\/cores\/$CORE_NAME\/data/" $SOLR_MULTICORES_DIR/cores/$CORE_NAME/conf/solrconfig.xml
+    
+    # modifico solr.xml
+    cp -a $SOLR_MULTICORES_DIR/cores/solr.xml $SOLR_MULTICORES_DIR/cores/solr.xml.copia_ante_aggiunta_core_del_$DATE
+    sed -i "s/<\/cores>/     <core name=\"$CORE_NAME\" instanceDir=\"$CORE_NAME\" \/>\n    <\/cores>/" $SOLR_MULTICORES_DIR/cores/solr.xml
+    echo
+    echo "OK, il core '$CORE_NAME' e' stato CREATO in: $SOLR_MULTICORES_DIR/cores/$CORE_NAME"
+    echo 
+    echo "*******************************************"
+    echo
+    echo "* Modifica ora extension/ezfind/settings/solr.ini inserendo:"
+    echo "    [SolrBase]"
+    echo "    SearchServerURI=http://$SOLR_SERVER_NAME:$SOLR_MULTICORES_PORT/solr/$CORE_NAME"
+    echo
+    echo "* archivia la vecchia directory java eseguendo:"
+    echo "    tar -czvf extension/ezfind/old_java.tar.gz extension/ezfind/java"
+    echo "    rm -rf extension/ezfind/java"
+    echo 
+    echo "Se vuoi migrare i dati esistenti, copia il contenuto di" 
+    echo "  extension/ezfind/java/solr/data/ "
+    echo "nella directory:"
+    echo "  $SOLR_MULTICORES_DIR/cores/$CORE_NAME/data"
+    echo 
+    echo "Ricordati di riavviare solr eseguendo: "
+    echo "  service $SOLR_MULTICORES_INIT_SCRIPT restart"
+    echo
+    ;; 
+  remove) 
+    if ! [ -d "$SOLR_MULTICORES_DIR/cores/$CORE_NAME"  ] ; then
+      echo "ERRORE: il core '$CORE_NAME' non esiste"
+      exit 1
+    fi
+    trash_dir=$SOLR_MULTICORES_DIR/cores/cestino/$DATE/
+    echo "Elimino directory con data e configurazione (messe in cestino: $trash_dir)"
+    mkdir -p $trash_dir
+    mv -f $SOLR_MULTICORES_DIR/cores/$CORE_NAME $trash_dir 
+    # modifico solr.xml
+    solr_xml_trash_folder=$SOLR_MULTICORES_DIR/cores/cestino/old_solr.xml
+    mkdir -p $solr_xml_trash_folder
+    nomefile_backup=$solr_xml_trash_folder/solr.xml.copia_ante_aggiunta_core_del_$DATE
+    echo "Elimino il core dal file  $SOLR_MULTICORES_DIR/cores/solr.xml (conservo copia in $nomefile_backup)"
+    cp -a $SOLR_MULTICORES_DIR/cores/solr.xml $nomefile_backup
+    sed -i "/instanceDir=\"$CORE_NAME\" \/>/d" $SOLR_MULTICORES_DIR/cores/solr.xml
+    echo
+    echo "OK, il core '$CORE_NAME' è stato RIMOSSO"
+    echo
+    echo "Ricordati di riavviare solr eseguendo: "
+    echo "  service $SOLR_MULTICORES_INIT_SCRIPT restart"
+    echo 
+    ;;
+  list)
+    for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do 
+      solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
+      echo "Listing cores for sorl multicore at $solr_multicore_dir"
+      echo "(di seguito l'esito del comando: cat $solr_multicore_dir/cores/solr.xml | grep instanceDir  )"
+      cat $solr_multicore_dir/cores/solr.xml | grep instanceDir
+      if [ $? -eq 1 ] ; then 
+        echo "         none"
+      fi
+    done
+    ;;
+  status)
+    for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
+      solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
+      echo -n "Status of solr multicore installation at $solr_multicore_dir: "
+      if [ -f $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid ] ; then
+        echo "running"
+      else
+        echo "stopped"
+      fi
+     done
+    ;;
+  *)
+    # we arrive here in case the script is called with no options (and no arguments)
+    $THIS_SCRIPT_FULL_NAME -h
+    ;;
+esac
+
