@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Utilite' per aggiungere/togliere cores da una installazione solr multicore
 #
 # ATENZIONE: lo script prevede che 
@@ -20,6 +19,7 @@ SOLR_SERVER_NAME=`hostname -f`
 
 # attivare per debug
 DEBUG=0
+
 
 ########## DO NOT CHANGE THE REST ################################################
 
@@ -222,4 +222,3 @@ case $action in
     $THIS_SCRIPT_FULL_NAME -h
     ;;
 esac
-
