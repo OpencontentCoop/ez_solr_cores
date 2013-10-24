@@ -8,7 +8,7 @@
 #
 # * il nome dell'installazione multicore sia "multicore-XXXX" dove XXXX e' il numero della porta
 # * lo script di start/stop di solr sia /etc/init.s/solr.multicore-8984
-# * /home/solr/multicore-8984/conftemplate contenga una copia della directory extension/ezfind/java/solr/conf/ di ezfind
+# * /home/solr/multicore-8984/ezfind_conf_template contenga una copia della directory extension/ezfind/java/solr/conf/ di ezfind
 #
 #SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
 #SOLR_MULTICORES_NAMES="multicore-8984"
@@ -148,12 +148,19 @@ case $action in
       echo "ERRORE: core '$CORE_NAME' e' gia' esistente"
       exit 1 
     fi
+    if ! [ -f "$SOLR_MULTICORES_DIR/ezfind_conf_template/schema.xml" ] ; then
+      echo "ERRORE: manca la copia di template della directory extension/ezfind/java/solr/conf di ezfind in $SOLR_MULTICORES_DIR/ezfind_conf_template"
+      echo 
+      echo "Creala con il comando:  cp -a extension/ezfind/java/solr/conf $SOLR_MULTICORES_DIR/ezfind_conf_template"
+      exit 1
+    fi
+
     mkdir $SOLR_MULTICORES_DIR/cores/$CORE_NAME
 
     mkdir -p $SOLR_MULTICORES_DIR/cores/$CORE_NAME/data
     # creo /conf a partire da un template
     mkdir $SOLR_MULTICORES_DIR/cores/$CORE_NAME/conf
-    cp -a $SOLR_MULTICORES_DIR/conftemplate/*  $SOLR_MULTICORES_DIR/cores/$CORE_NAME/conf/
+    cp -a $SOLR_MULTICORES_DIR/ezfind_conf_template/*  $SOLR_MULTICORES_DIR/cores/$CORE_NAME/conf/
     # modifico dataDir
     sed -i "s/solr.data.dir:.\/solr\/data/solr.data.dir:..\/cores\/$CORE_NAME\/data/" $SOLR_MULTICORES_DIR/cores/$CORE_NAME/conf/solrconfig.xml
     
