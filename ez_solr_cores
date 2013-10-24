@@ -10,9 +10,6 @@
 # * lo script di start/stop di solr sia /etc/init.s/solr.multicore-8984
 # * /home/solr/multicore-8984/conftemplate contenga una copia della directory extension/ezfind/java/solr/conf/ di ezfind
 #
-# Ogni volta che si aggiunge un multicore, si deve aggiornare 
-# la seguente:
-# SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
 #SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
 #SOLR_MULTICORES_NAMES="multicore-8984"
 # questi valori sono da adeguare all'installazione
