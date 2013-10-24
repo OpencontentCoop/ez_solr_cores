@@ -6,7 +6,7 @@
 #
 # ATENZIONE: lo script prevede che 
 #
-# * il nome dell'installazione multicore termini con il numero della porta solr, es. multicore-8984
+# * il nome dell'installazione multicore sia "multicore-XXXX" dove XXXX e' il numero della porta
 # * lo script di start/stop di solr sia /etc/init.s/solr.multicore-8984
 # * /home/solr/multicore-8984/conftemplate contenga una copia della directory extension/ezfind/java/solr/conf/ di ezfind
 #
@@ -15,9 +15,9 @@
 # SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
 #SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
 #SOLR_MULTICORES_NAMES="multicore-8984"
-SOLR_MULTICORES_NAMES=`ls -1 /home/solr | grep -e ^multicore- | grep -e [0-9][0-9][0-9][0-9]$`
 # questi valori sono da adeguare all'installazione
 SOLR_MULTICORES_ROOT_DIR=/home/solr
+SOLR_MULTICORES_NAMES=`ls -1 $SOLR_MULTICORES_ROOT_DIR | grep -e ^multicore- | grep -e [0-9][0-9][0-9][0-9]$`
 SOLR_SERVER_NAME=`hostname -f`
 
 # attivare per debug
@@ -94,6 +94,11 @@ for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
   cores_number=$[ $cores_number + 1 ]
 done
 
+if [ $cores_number -eq 0 ] ; then
+  echo "ERRORE: there are not any valid multicore in $SOLR_MULTICORES_ROOT_DIR"
+  exit 1
+fi
+
 if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then 
   if [ $cores_number -eq 1 ] ; then
     SOLR_MULTICORES_NAME=$SOLR_MULTICORES_NAMES
@@ -122,6 +127,12 @@ if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then
     done
   fi
 fi 
+
+if [ -z SOLR_MULTICORES_NAME ] ; then
+  # if we are here user has inserted a number not referred to any multicore
+  echo "ERRORE: invalid multicore"
+  exit 1
+fi
 
 SOLR_MULTICORES_DIR=$SOLR_MULTICORES_ROOT_DIR/$SOLR_MULTICORES_NAME # /home/solr/multicore
 # ricavo porta
