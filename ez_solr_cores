@@ -7,7 +7,7 @@
 # ATENZIONE: lo script prevede che 
 #
 # * il nome dell'installazione multicore sia "multicore-XXXX" dove XXXX e' il numero della porta
-# * lo script di start/stop di solr sia /etc/init.s/solr.multicore-8984
+# * lo script di start/stop di solr sia /etc/init.s/solr-multicore-XXXX e sia riavviabile con "service solr.multicore-XXXX restart"
 # * /home/solr/multicore-8984/java contenga una copia della directory extension/ezfind/java di ezfind
 #
 #SOLR_MULTICORES_NAMES="multicore-8984 multicore-8985"
@@ -15,6 +15,9 @@
 # impostare SOLR_MULTICORES_ROOT_DIR pari alla directory che contiene le installazioni multicore:
 SOLR_MULTICORES_ROOT_DIR=/home/solr
 
+
+# directory where pid for daemon are stored
+PID_DIR=/var/run
 # attivare per debug
 DEBUG=0
 
@@ -140,7 +143,7 @@ SOLR_MULTICORES_DIR=$SOLR_MULTICORES_ROOT_DIR/$SOLR_MULTICORES_NAME # /home/solr
 # ${#var} = lunghezza della variabiel var
 SOLR_MULTICORES_PORT=${SOLR_MULTICORES_DIR:$(( ${#SOLR_MULTICORES_DIR}-4 ))}
 # ricavo il nome del servizio
-SOLR_MULTICORES_INIT_SCRIPT=solr.$SOLR_MULTICORES_NAME
+SOLR_MULTICORES_INIT_SCRIPT=solr-$SOLR_MULTICORES_NAME
 # data in formato: 2013_10_24_h09_46_43
 DATE=`date +%Y_%m_%d_h%H_%M_%S`
 
@@ -238,13 +241,17 @@ case $action in
       # get first core needed for testing its ping page
       cat  $SOLR_MULTICORES_DIR/cores/solr.xml | grep -m1 "<core name="  | sed  's/<core name=\"//g'
       echo "manca del codice qui"
-      exit 1
+      #exit 1
+      echo "forzo valori per trento"
+      CORE_NAME=rovereto
+      SOLR_MULTICORES_PORT=8990
+      SOLR_MULTICORES_INIT_SCRIPT=solr-$SOLR_MULTICORES_NAMES
       echo  "Status of solr multicore installation at $solr_multicore_dir: "
-      #if [ -f $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid ] ; then
-      #  echo "running"
-      #else
-      #  echo "stopped"
-      #fi
+      if [ -f $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid ] ; then
+        echo "  Pid $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid found (daemon should be running)"
+      else
+        echo "  Pid $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid not found (daemon is not running)"
+      fi
       ping_url="http://localhost:$SOLR_MULTICORES_PORT/solr/$CORE_NAME/admin/ping"
       wget  -qO - $ping_url | grep "<str name=\"status\">OK</str>" > /dev/null
       if [ $? -eq 0 ] ; then 
