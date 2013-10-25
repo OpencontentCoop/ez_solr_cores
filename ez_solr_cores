@@ -32,7 +32,7 @@ THIS_SCRIPT=`basename $0`
 THIS_SCRIPT_FULL_NAME=`dirname $0`/$THIS_SCRIPT
 
 # getops see /usr/share/doc/util-linux/examples/getopt-parse.bash
-TEMP=`getopt -o hlsa:r: --long help,list,status,add:,remove: \
+TEMP=`getopt -o hvlsa:r: --long help,verbose,list,status,add:,remove: \
      -n "$THIS_SCRIPT" -- "$@"`
 
 if [ $? != 0 ] ; then
@@ -53,12 +53,15 @@ while true ; do
                 echo "-h,--help                       "
                 echo "-a,--add CORENAME               add core"
                 echo "-r,--remove CORENAME            remove core"
-                #echo "-v,--verbose...                 display more information"
+                echo "-v,--verbose...                 display more information"
                 #echo "-d,--debug...                  display debug output at end of execution"
                 echo "-l,--list                       list all cores (default options)"
                 echo "-s,--status                     running status of all cores"
                 echo 
                 exit;;
+        -v|--verbose)
+            VERBOSE=1
+            shift ;;
         -l|--list)
             action="list"
             shift ;;
@@ -151,13 +154,12 @@ case $action in
   add)
     if ! [ -f "$SOLR_MULTICORES_DIR/java/solr/conf/schema.xml" ] ; then
       echo "ERRORE: $SOLR_MULTICORES_DIR/java/solr/conf/schema.xml mancante:  in $SOLR_MULTICORES_DIR/java/ e' necessario avere una copia di extension/ezfind/java/"
-      echo 
-      echo "Creala con il comando:  cp -a extension/ezfind/java $SOLR_MULTICORES_DIR/java"
+      [ $VERBOSE ] && echo "Creala con il comando:  cp -a extension/ezfind/java $SOLR_MULTICORES_DIR/java"
       exit 1
     fi
     # creo directory: se da' errore il core esiste gia
     if [ -d "$SOLR_MULTICORES_DIR/cores/$CORE_NAME" ] ; then
-      echo "ERRORE: core '$CORE_NAME' e' gia' esistente"
+      echo "ERRORE: core '$CORE_NAME' gia' esistente"
       exit 1
     fi
 
@@ -226,9 +228,10 @@ case $action in
       solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
       echo
       echo "* Multicore at $solr_multicore_dir"
-      echo "Lucene Version  (cat $solr_multicore_dir/java/solr/conf/solrconfig.xml | grep '<luceneMatchVersion>')"
-      cat $solr_multicore_dir/java/solr/conf/solrconfig.xml | grep '<luceneMatchVersion>'
-      echo "Cores list: (cat $solr_multicore_dir/cores/solr.xml | grep instanceDir )"
+      [ $VERBOSE ] && echo "Lucene Version  (cat $solr_multicore_dir/java/solr/conf/solrconfig.xml | grep '<luceneMatchVersion>')"
+      [ $VERBOSE ] && cat $solr_multicore_dir/java/solr/conf/solrconfig.xml | grep '<luceneMatchVersion>'
+      echo "Cores list:"
+      [ $VERBOSE ] && echo "cat $solr_multicore_dir/cores/solr.xml | grep instanceDir )"
       cat $solr_multicore_dir/cores/solr.xml | grep instanceDir
       if [ $? -eq 1 ] ; then 
         echo "         none"
