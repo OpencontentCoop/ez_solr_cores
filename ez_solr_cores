@@ -242,26 +242,25 @@ case $action in
     for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
       solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
       # get first core needed for testing its ping page
-      cat  $SOLR_MULTICORES_DIR/cores/solr.xml | grep -m1 "<core name="  | sed  's/<core name=\"//g'
-      echo "manca del codice qui"
-      #exit 1
-      echo "forzo valori per trento"
-      CORE_NAME=rovereto
-      SOLR_MULTICORES_PORT=8990
-      SOLR_MULTICORES_INIT_SCRIPT=solr-$SOLR_MULTICORES_NAMES
+      CORE_NAMES=`cat $solr_multicore_dir/cores/solr.xml | grep "<core name="  | sed  's/[[:blank:]]*<core name=\"//g' |  sed  's/".*//g'`
+      SOLR_MULTICORES_PORT=${solr_multicore_dir:$(( ${#solr_multicore_dir}-4 ))}
+      SOLR_MULTICORES_INIT_SCRIPT=solr-$solr_multicore_name
       echo  "Status of solr multicore installation at $solr_multicore_dir: "
       if [ -f $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid ] ; then
-        echo "  Pid $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid found (daemon should be running)"
+        echo "  Daemon: pid $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid found (multicore daemon is running)"
       else
-        echo "  Pid $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid not found (daemon is not running)"
+        echo "  Daemon: pid $PID_DIR/$SOLR_MULTICORES_INIT_SCRIPT.pid not found (multicore daemon is not running)"
       fi
-      ping_url="http://localhost:$SOLR_MULTICORES_PORT/solr/$CORE_NAME/admin/ping"
-      wget  -qO - $ping_url | grep "<str name=\"status\">OK</str>" > /dev/null
-      if [ $? -eq 0 ] ; then 
-        echo "  Status OK at $ping_url"
-      else
-        echo "  ERR: status is NOT ok  (either $ping_url is unreachable or its content does not have OK status)"
-      fi
+      for core_name in $CORE_NAMES ; do
+        echo "  core '$core_name':"
+        ping_url="http://localhost:$SOLR_MULTICORES_PORT/solr/$core_name/admin/ping"
+        wget  -qO - $ping_url | grep "<str name=\"status\">OK</str>" > /dev/null
+        if [ $? -eq 0 ] ; then 
+          echo "    Status OK at $ping_url (solr for core '$core_name' is running)"
+        else
+          echo "    ERR: status is NOT ok  (either $ping_url is unreachable or its content does not have OK status)"
+        fi
+      done
      done
     ;;
   *)
