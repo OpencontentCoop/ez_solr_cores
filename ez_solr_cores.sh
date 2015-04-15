@@ -134,11 +134,12 @@ if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then
   fi
 fi 
 
-if [ -z SOLR_MULTICORES_NAME ] ; then
-  # if we are here user has inserted a number not referred to any multicore
-  echo "ERRORE: invalid multicore"
-  exit 1
-fi
+# il seguente e' da sistemare
+#if [ -z $SOLR_MULTICORES_NAME ] ; then
+#  # if we are here user has inserted a number not referred to any multicore
+#  echo "ERRORE: invalid multicore"
+#  exit 1
+#fi
 
 SOLR_MULTICORES_DIR=$SOLR_MULTICORES_ROOT_DIR/$SOLR_MULTICORES_NAME # /home/solr/multicore
 # ricavo porta
