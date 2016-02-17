@@ -36,6 +36,7 @@ SOLR_MULTICORES_ROOT_DIR=/home/solr
 PID_DIR=/var/run
 # attivare per debug
 DEBUG=0
+#DEBUG=1
 
 ########## DO NOT CHANGE THE REST ################################################
 
@@ -48,7 +49,7 @@ THIS_SCRIPT=`basename $0`
 THIS_SCRIPT_FULL_NAME=`dirname $0`/$THIS_SCRIPT
 
 # getops see /usr/share/doc/util-linux/examples/getopt-parse.bash
-TEMP=`getopt -o hvlsa:r: --long help,verbose,list,status,add:,remove: \
+TEMP=`getopt -o hvlsm:a:r: --long help,verbose,list,status,multicore:,add:,remove: \
      -n "$THIS_SCRIPT" -- "$@"`
 
 if [ $? != 0 ] ; then
@@ -69,10 +70,16 @@ while true ; do
                 echo "-h,--help                       "
                 echo "-a,--add CORENAME               add core"
                 echo "-r,--remove CORENAME            remove core"
+                echo "-m,--multicore MULTICORENAME    choose multicore name (only needed for non interactive execution)"
                 echo "-v,--verbose...                 display more information"
                 #echo "-d,--debug...                  display debug output at end of execution"
                 echo "-l,--list                       list all cores (default options)"
                 echo "-s,--status                     running status of all cores"
+                echo 
+                echo "Es."
+                echo "     $THIS_SCRIPT -l "
+                echo "     $THIS_SCRIPT -a coreX"
+                echo "     $THIS_SCRIPT -a coreX -m multicore-comunweb-8999 "
                 echo 
                 exit;;
         -v|--verbose)
@@ -84,6 +91,10 @@ while true ; do
         -s|--status)
             action="status"
             shift ;;
+        -m|--multicore)
+            action="multicore"
+            SOLR_MULTICORES_NAME="$2"
+            shift 2 ;;
         -a|--add)
             action="add"
             CORE_NAME="$2"
@@ -121,35 +132,56 @@ if [ $cores_number -eq 0 ] ; then
   exit 1
 fi
 
+
+# sceglie multicore
 if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then 
   if [ $cores_number -eq 1 ] ; then
-    SOLR_MULTICORES_NAME=$SOLR_MULTICORES_NAMES
+    if [ -z SOLR_MULTICORES_NAME ] || ( [ $SOLR_MULTICORES_NAME = $SOLR_MULTICORES_NAMES ]  ) ; then
+      SOLR_MULTICORES_NAME=$SOLR_MULTICORES_NAMES
+    else
+      echo "ERRORE: the multicore you have choosen $SOLR_MULTICORES_NAMES does not exists in $SOLR_MULTICORES_ROOT_DIR"
+      exit 1
+    fi
   else
     echo
     echo "Multicore disponibili:"
     counter=0
-    echo
+    echo0
     echo "  Selection     Path"
     echo "------------------------------------------------------------"
+    multicore_scelto_da_console_esistente=0
     for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
       counter=$[ $counter + 1 ]
       solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
       echo "  $counter             $solr_multicore_dir"
+      if ! [ -z SOLR_MULTICORES_NAME ] ; then
+        if [ "$SOLR_MULTICORES_NAME" = "$solr_multicore_name" ] ; then
+           multicore_scelto_da_console_esistente=1
+        fi  
+      fi 
     done
     echo
-    echo -n "Scegli il numero del multicore: "
-    read choice
-    
-    counter=0
-    for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
-      counter=$[ $counter + 1 ]
-      if [ "$choice" -eq $counter ] ; then
-        SOLR_MULTICORES_NAME=$solr_multicore_name
+    if [ $multicore_scelto_da_console_esistente -eq 1 ] ; then
+      echo "Il multicore scelto: $SOLR_MULTICORES_NAME esiste, procedo"
+      echo
+    else
+      if ! [ -z SOLR_MULTICORES_NAME ] ; then
+        echo "Il multicore scelto: $SOLR_MULTICORES_NAME NON esiste."
       fi
-    done
+      echo -n "Scegli il numero del multicore: "
+      read choice
+      counter=0
+      for solr_multicore_name in $SOLR_MULTICORES_NAMES ; do
+        counter=$[ $counter + 1 ]
+        if [ "$choice" -eq $counter ] ; then
+          SOLR_MULTICORES_NAME=$solr_multicore_name
+        fi
+      done
+    fi
   fi
 fi 
 
+# controlla che multicore inserito esista
 if [ -z SOLR_MULTICORES_NAME ] ; then
   # if we are here user has inserted a number not referred to any multicore
   echo "ERRORE: invalid multicore"
