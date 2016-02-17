@@ -136,12 +136,13 @@ fi
 # sceglie multicore
 if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then 
   if [ $cores_number -eq 1 ] ; then
-    if [ -z SOLR_MULTICORES_NAME ]  ; then
+    if [ "$SOLR_MULTICORES_NAME" = "" ]  ; then
       SOLR_MULTICORES_NAME=$SOLR_MULTICORES_NAMES
     else
-      if ! [ $SOLR_MULTICORES_NAME = $SOLR_MULTICORES_NAMES ] ; then
-      echo "ERRORE: the multicore you have choosen $SOLR_MULTICORES_NAMES does not exists in $SOLR_MULTICORES_ROOT_DIR"
-      exit 1
+      if ! [ "$SOLR_MULTICORES_NAMES" =  "$SOLR_MULTICORES_NAME" ] ; then
+        echo "ERRORE: the multicore you have choosen $SOLR_MULTICORES_NAME does not exists in $SOLR_MULTICORES_ROOT_DIR"
+        exit 1
+      fi
     fi
   else
     echo
@@ -155,7 +156,7 @@ if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then
       counter=$[ $counter + 1 ]
       solr_multicore_dir=$SOLR_MULTICORES_ROOT_DIR/$solr_multicore_name
       echo "  $counter             $solr_multicore_dir"
-      if ! [ -z SOLR_MULTICORES_NAME ] ; then
+      if ! [ "$SOLR_MULTICORES_NAME" = "" ] ; then
         if [ "$SOLR_MULTICORES_NAME" = "$solr_multicore_name" ] ; then
            multicore_scelto_da_console_esistente=1
         fi  
@@ -166,7 +167,7 @@ if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then
       echo "Il multicore scelto: $SOLR_MULTICORES_NAME esiste, procedo"
       echo
     else
-      if ! [ -z SOLR_MULTICORES_NAME ] ; then
+      if ! [ "$SOLR_MULTICORES_NAME" = "" ] ; then
         echo "Il multicore scelto: $SOLR_MULTICORES_NAME NON esiste."
       fi
       echo -n "Scegli il numero del multicore: "
