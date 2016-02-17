@@ -136,9 +136,10 @@ fi
 # sceglie multicore
 if [ $action ] && ( [ $action = "add" ] || [ $action = "remove" ] ) ; then 
   if [ $cores_number -eq 1 ] ; then
-    if [ -z SOLR_MULTICORES_NAME ] || ( [ $SOLR_MULTICORES_NAME = $SOLR_MULTICORES_NAMES ]  ) ; then
+    if [ -z SOLR_MULTICORES_NAME ]  ; then
       SOLR_MULTICORES_NAME=$SOLR_MULTICORES_NAMES
     else
+      if ! [ $SOLR_MULTICORES_NAME = $SOLR_MULTICORES_NAMES ] ; then
       echo "ERRORE: the multicore you have choosen $SOLR_MULTICORES_NAMES does not exists in $SOLR_MULTICORES_ROOT_DIR"
       exit 1
     fi
